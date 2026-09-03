@@ -858,6 +858,17 @@ footer{
         reg.addEventListener("updatefound", function () { watch(reg.installing); });
       }).catch(function () { /* offline or unsupported context - app still works */ });
 
+      /* Make sure the exact URL this app was opened at is saved for offline
+         refreshes, whatever form it takes (/, /index.html, ?query). */
+      function cacheThisPage() {
+        navigator.serviceWorker.ready.then(function (r) {
+          var target = r.active || navigator.serviceWorker.controller;
+          if (target) { target.postMessage({ type: "CACHE_PAGE", url: window.location.href }); }
+        }).catch(function () {});
+      }
+      cacheThisPage();
+      window.addEventListener("online", cacheThisPage);
+
       var reloading = false;
       navigator.serviceWorker.addEventListener("controllerchange", function () {
         if (reloading) { return; }
