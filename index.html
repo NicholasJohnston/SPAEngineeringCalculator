@@ -72,6 +72,14 @@ h1.bartitle{font-size:17px;margin:0;font-weight:700;letter-spacing:.3px;flex:1;t
   color:var(--brand-dark);line-height:1;
 }
 @media (prefers-color-scheme: dark){ .hero .mark{color:var(--brand-grad)} }
+.hero .logo{
+  display:block;width:auto;height:120px;max-width:72%;margin:0 auto;
+}
+@media (prefers-color-scheme: dark){
+  .hero .logo{
+    background:#fff;border-radius:14px;padding:10px 14px;box-sizing:content-box;
+  }
+}
 .hero .sub{color:var(--text-muted);font-size:13px;letter-spacing:2.4px;margin-top:6px;text-transform:uppercase}
 .menu{padding:18px 16px;display:grid;gap:12px}
 .menu button{
@@ -241,7 +249,7 @@ footer{
 <!-- ============ HOME ============ -->
 <section class="panel active" id="home" data-title="SPA Engineering Calculator" data-parent="">
   <div class="hero">
-    <span class="mark">SPA</span>
+    <img class="logo" src="logo.png" width="640" height="606" alt="SPA" decoding="async">
     <div class="sub">Engineering Calculator</div>
   </div>
   <div class="menu">
