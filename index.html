@@ -193,7 +193,40 @@ footer{
   .go,.back,.menu{display:none}
   .panel{display:block !important}
 }
+/* ---------- PWA chrome ---------- */
+#installBtn{
+  appearance:none;border:0;cursor:pointer;background:rgba(255,255,255,.18);color:#fff;
+  font-size:14px;font-weight:600;font-family:inherit;border-radius:8px;padding:7px 12px;white-space:nowrap;
+}
+#installBtn:hover{background:rgba(255,255,255,.32)}
+#installBtn[hidden]{display:none}
+#offlineBar{
+  background:#8a5a00;color:#fff;font-size:13px;font-weight:600;text-align:center;padding:6px 10px;
+}
+#offlineBar[hidden]{display:none}
+#updateBar{
+  position:fixed;left:12px;right:12px;bottom:12px;z-index:60;max-width:736px;margin:0 auto;
+  background:var(--brand-dark);color:#fff;border-radius:12px;padding:12px 14px;
+  display:flex;align-items:center;gap:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);font-size:14px;
+}
+#updateBar[hidden]{display:none}
+#updateBar button{
+  appearance:none;border:0;cursor:pointer;background:#fff;color:var(--brand-dark);
+  font-family:inherit;font-size:14px;font-weight:700;border-radius:8px;padding:7px 12px;
+}
 </style>
+<meta name="theme-color" content="#2ea3f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16448c" media="(prefers-color-scheme: dark)">
+<meta name="description" content="SPA Engineering Calculator - offline-capable engineering calculators for area, volume, mass, binder spread rates and VCF.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SPA Calc">
+<meta name="application-name" content="SPA Calc">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="icon" href="icon-512.png" sizes="512x512" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 </head>
 <body>
 <div class="app">
@@ -201,8 +234,9 @@ footer{
 <header class="bar">
   <button class="back" id="backBtn" type="button" hidden>&#8592; Back</button>
   <h1 class="bartitle" id="barTitle">SPA Engineering Calculator</h1>
-  <span class="barspacer" aria-hidden="true"></span>
+  <button class="back" id="installBtn" type="button" hidden>&#8595; Install</button>
 </header>
+<div id="offlineBar" hidden>Offline &#8212; all calculators still work</div>
 
 <!-- ============ HOME ============ -->
 <section class="panel active" id="home" data-title="SPA Engineering Calculator" data-parent="">
@@ -802,5 +836,82 @@ footer{
   show(panels[start] ? start : "home");
 }());
 </script>
+<div id="updateBar" hidden><span style="flex:1">A new version is available.</span><button type="button" id="updateBtn">Update</button></div>
+<script>
+/* ---------- PWA: install, offline status, update prompt, data persistence ---------- */
+(function () {
+  "use strict";
+
+  /* --- 1. Service worker registration + update flow --- */
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").then(function (reg) {
+        function watch(worker) {
+          if (!worker) { return; }
+          worker.addEventListener("statechange", function () {
+            if (worker.state === "installed" && navigator.serviceWorker.controller) {
+              showUpdate(worker);
+            }
+          });
+        }
+        if (reg.waiting && navigator.serviceWorker.controller) { showUpdate(reg.waiting); }
+        reg.addEventListener("updatefound", function () { watch(reg.installing); });
+      }).catch(function () { /* offline or unsupported context - app still works */ });
+
+      var reloading = false;
+      navigator.serviceWorker.addEventListener("controllerchange", function () {
+        if (reloading) { return; }
+        reloading = true;
+        window.location.reload();
+      });
+    });
+  }
+
+  function showUpdate(worker) {
+    var bar = document.getElementById("updateBar");
+    var btn = document.getElementById("updateBtn");
+    if (!bar || !btn) { return; }
+    bar.hidden = false;
+    btn.onclick = function () {
+      bar.hidden = true;
+      worker.postMessage({ type: "SKIP_WAITING" });
+    };
+  }
+
+  /* --- 2. Install prompt --- */
+  var deferred = null;
+  var installBtn = document.getElementById("installBtn");
+  window.addEventListener("beforeinstallprompt", function (ev) {
+    ev.preventDefault();
+    deferred = ev;
+    if (installBtn) { installBtn.hidden = false; }
+  });
+  if (installBtn) {
+    installBtn.addEventListener("click", function () {
+      if (!deferred) { return; }
+      deferred.prompt();
+      deferred.userChoice.then(function () {
+        deferred = null;
+        installBtn.hidden = true;
+      });
+    });
+  }
+  window.addEventListener("appinstalled", function () {
+    deferred = null;
+    if (installBtn) { installBtn.hidden = true; }
+  });
+
+  /* --- 3. Offline indicator --- */
+  var offlineBar = document.getElementById("offlineBar");
+  function netStatus() {
+    if (offlineBar) { offlineBar.hidden = navigator.onLine; }
+  }
+  window.addEventListener("online", netStatus);
+  window.addEventListener("offline", netStatus);
+  netStatus();
+
+}());
+</script>
+
 </body>
 </html>
