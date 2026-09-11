@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en-AU" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>SPA Engineering Calculator</title>
+<style>
+:root{
+  --brand:#2ea3f2;
+  --brand-dark:#16448c;
+  --brand-grad:#6ee3ff;
+  --bg:#f5fcff;
+  --surface:#ffffff;
+  --text:#1c2430;
+  --text-muted:#5d6b7a;
+  --border:#d5dde5;
+  --row-alt:#f7f9fb;
+  --field-bg:#2b9be5;
+  --shadow:0 2px 10px rgba(20,40,70,.10);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#101821;
+    --surface:#18222e;
+    --text:#e8eef5;
+    --text-muted:#9fb0c2;
+    --border:#2c3947;
+    --row-alt:#1d2836;
+    --shadow:0 2px 10px rgba(0,0,0,.45);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
+  font-size:15px;
+  line-height:1.45;
+  -webkit-text-size-adjust:100%;
+}
+.app{max-width:760px;margin:0 auto;padding-block-end:48px}
+
+/* ---------- header ---------- */
+header.bar{
+  background:linear-gradient(100deg,var(--brand),var(--brand-grad));
+  color:#fff;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  position:sticky;
+  top:0;
+  z-index:20;
+  box-shadow:var(--shadow);
+}
+.back{
+  appearance:none;border:0;background:rgba(255,255,255,.18);color:#fff;
+  font-size:15px;font-weight:600;border-radius:8px;padding:7px 12px;cursor:pointer;
+  white-space:nowrap;
+}
+.back:hover{background:rgba(255,255,255,.32)}
+.back[hidden]{display:none}
+h1.bartitle{font-size:17px;margin:0;font-weight:700;letter-spacing:.3px;flex:1;text-align:center}
+.barspacer{width:74px;flex:none}
+
+/* ---------- home ---------- */
+.hero{text-align:center;padding:26px 16px 6px}
+.hero .mark{
+  display:inline-block;font-weight:800;letter-spacing:2px;font-size:34px;
+  color:var(--brand-dark);line-height:1;
+}
+@media (prefers-color-scheme: dark){ .hero .mark{color:var(--brand-grad)} }
+.hero .logo{
+  display:block;width:auto;height:120px;max-width:72%;margin:0 auto;
+}
+@media (prefers-color-scheme: dark){
+  .hero .logo{
+    background:#fff;border-radius:14px;padding:10px 14px;box-sizing:content-box;
+  }
+}
+.hero .sub{color:var(--text-muted);font-size:13px;letter-spacing:2.4px;margin-top:6px;text-transform:uppercase}
+.menu{padding:18px 16px;display:grid;gap:12px}
+.menu button{
+  appearance:none;border:0;cursor:pointer;width:100%;
+  background:linear-gradient(100deg,var(--brand),var(--brand-grad));
+  color:#fff;font-size:16px;font-weight:600;font-family:inherit;
+  padding:17px 18px;border-radius:26px;text-align:center;
+  box-shadow:var(--shadow);
+}
+.menu button:hover{filter:brightness(1.06)}
+.menu button:active{transform:translateY(1px)}
+.menu.secondary button{font-size:15px;padding:15px 18px}
+
+/* ---------- panels ---------- */
+.panel{display:none}
+.panel.active{display:block}
+.section-intro{
+  text-align:center;color:var(--brand-dark);font-weight:700;font-size:19px;
+  padding:22px 16px 2px;
+}
+@media (prefers-color-scheme: dark){ .section-intro{color:var(--brand-grad)} }
+
+/* ---------- calculator form ---------- */
+.form{
+  background:linear-gradient(160deg,var(--brand),#2b9be5);
+  padding:22px 18px 26px;
+  color:#fff;
+}
+.field{margin-block-end:16px}
+.field label{display:block;font-size:13px;font-weight:600;margin-block-end:6px}
+.inputrow{display:flex;align-items:center;gap:10px}
+.inputrow input{
+  flex:1;min-width:0;font-family:inherit;font-size:16px;color:#fff;
+  background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.55);
+  border-radius:22px;padding:11px 16px;
+}
+.inputrow input::placeholder{color:rgba(255,255,255,.6)}
+.inputrow input:focus{outline:2px solid #fff;outline-offset:1px;background:rgba(255,255,255,.24)}
+.unit{font-size:13px;font-weight:600;opacity:.95;white-space:nowrap;min-width:52px}
+.unit sup{font-size:9px}
+.go{
+  appearance:none;border:0;cursor:pointer;display:block;width:80%;margin:22px auto 0;
+  background:#fff;color:var(--brand);font-family:inherit;font-size:16px;font-weight:700;
+  padding:14px;border-radius:24px;box-shadow:var(--shadow);
+}
+.go:hover{background:#eef8ff}
+.msg{
+  margin:14px auto 0;max-width:92%;background:rgba(0,0,0,.22);
+  border-inline-start:4px solid #ffe08a;border-radius:8px;
+  padding:9px 12px;font-size:13px;
+}
+.msg[hidden]{display:none}
+
+/* ---------- results ---------- */
+.results{background:var(--surface);padding:24px 18px 30px;text-align:center}
+.results h2{
+  font-size:20px;color:var(--brand-dark);margin:0 0 6px;font-weight:700;
+}
+@media (prefers-color-scheme: dark){ .results h2{color:var(--brand-grad)} }
+.rule{width:64px;height:1px;background:var(--border);margin:0 auto 20px}
+.outrow{
+  display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+  max-width:340px;margin:0 auto;padding:12px 0;
+  border-block-end:1px solid var(--border);
+}
+.outrow:last-of-type{border-block-end:0}
+.outval{font-size:24px;font-weight:700;color:var(--brand);text-align:start;overflow-wrap:anywhere}
+.outlab{font-size:11px;color:var(--text-muted);text-align:end;white-space:nowrap}
+.outlab sup{font-size:8px}
+.note{
+  max-width:520px;margin:22px auto 0;font-size:12px;color:var(--text-muted);
+  text-align:start;background:var(--row-alt);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;
+}
+.note code{font-size:12px;background:transparent;color:var(--brand-dark)}
+@media (prefers-color-scheme: dark){ .note code{color:var(--brand-grad)} }
+
+/* ---------- tables ---------- */
+.tablewrap{background:var(--surface);padding:18px 16px 26px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+caption{caption-side:top;font-size:12px;color:var(--text-muted);padding-block-end:10px;text-align:start}
+th{
+  background:var(--brand-dark);color:#fff;font-weight:600;font-size:13px;
+  padding:10px 8px;text-align:center;
+}
+th sup{font-size:9px}
+td{padding:8px;text-align:center;border-block-end:1px solid var(--border)}
+tbody tr:nth-child(even){background:var(--row-alt)}
+.scroll{max-height:60vh;overflow:auto;border:1px solid var(--border);border-radius:10px}
+.scroll thead th{position:sticky;top:0}
+
+/* ---------- shape reference ---------- */
+.shapes{background:var(--surface);padding:18px 16px 26px}
+.shaperow{
+  display:flex;align-items:center;gap:16px;padding:12px 10px;
+  border-block-end:1px solid var(--border);
+}
+.shaperow:nth-child(even){background:var(--row-alt)}
+.shaperow svg{flex:none;width:84px;height:64px}
+.shapename{font-weight:700;font-size:15px}
+.shapeeq{font-size:14px;color:var(--text-muted);font-family:"Cambria Math",Georgia,serif}
+.shapehead{
+  display:flex;background:var(--brand-dark);color:#fff;font-weight:600;font-size:13px;
+  border-radius:8px 8px 0 0;overflow:hidden;
+}
+.shapehead span{padding:10px;text-align:center}
+.shapehead span:first-child{width:110px;flex:none}
+.shapehead span:last-child{flex:1}
+.stroke{fill:none;stroke:var(--brand);stroke-width:2.5}
+.fillsoft{fill:rgba(46,163,242,.16);stroke:var(--brand);stroke-width:2.5}
+
+footer{
+  text-align:center;font-size:11px;color:var(--text-muted);
+  padding:22px 16px 0;
+}
+@media print{
+  header.bar{position:static}
+  .go,.back,.menu{display:none}
+  .panel{display:block !important}
+}
+/* ---------- PWA chrome ---------- */
+#installBtn{
+  appearance:none;border:0;cursor:pointer;background:rgba(255,255,255,.18);color:#fff;
+  font-size:14px;font-weight:600;font-family:inherit;border-radius:8px;padding:7px 12px;white-space:nowrap;
+}
+#installBtn:hover{background:rgba(255,255,255,.32)}
+#installBtn[hidden]{display:none}
+#offlineBar{
+  background:#8a5a00;color:#fff;font-size:13px;font-weight:600;text-align:center;padding:6px 10px;
+}
+#offlineBar[hidden]{display:none}
+#updateBar{
+  position:fixed;left:12px;right:12px;bottom:12px;z-index:60;max-width:736px;margin:0 auto;
+  background:var(--brand-dark);color:#fff;border-radius:12px;padding:12px 14px;
+  display:flex;align-items:center;gap:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);font-size:14px;
+}
+#updateBar[hidden]{display:none}
+#updateBar button{
+  appearance:none;border:0;cursor:pointer;background:#fff;color:var(--brand-dark);
+  font-family:inherit;font-size:14px;font-weight:700;border-radius:8px;padding:7px 12px;
+}
+</style>
+<meta name="theme-color" content="#2ea3f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16448c" media="(prefers-color-scheme: dark)">
+<meta name="description" content="SPA Engineering Calculator - offline-capable engineering calculators for area, volume, mass, binder spread rates and VCF.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SPA Calc">
+<meta name="application-name" content="SPA Calc">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="icon" href="icon-512.png" sizes="512x512" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <button class="back" id="backBtn" type="button" hidden>&#8592; Back</button>
+  <h1 class="bartitle" id="barTitle">SPA Engineering Calculator</h1>
+  <button class="back" id="installBtn" type="button" hidden>&#8595; Install</button>
+</header>
+<div id="offlineBar" hidden>Offline &#8212; all calculators still work</div>
+
+<!-- ============ HOME ============ -->
+<section class="panel active" id="home" data-title="SPA Engineering Calculator" data-parent="">
+  <div class="hero">
+    <img class="logo" src="logo.png" width="640" height="606" alt="SPA" decoding="async">
+    <div class="sub">Engineering Calculator</div>
+  </div>
+  <div class="menu">
+    <button type="button" data-go="formulas">Area/Volume/Mass</button>
+    <button type="button" data-go="binderSpread">Binder Spread Rates</button>
+    <button type="button" data-go="granualMaterial">Granular Material Calculations</button>
+    <button type="button" data-go="bitumenConversion">Bitumen Conversions</button>
+    <button type="button" data-go="asphaltContainer">Asphalt Calculations</button>
+    <button type="button" data-go="dcptocbr">DCP to CBR</button>
+  </div>
+</section>
+
+<!-- ============ AREA / VOLUME / MASS ============ -->
+<section class="panel" id="formulas" data-title="Area/Volume/Mass" data-parent="home">
+  <div class="menu secondary">
+    <button type="button" data-go="areaRef">Area</button>
+    <button type="button" data-go="volumeRef">Volume</button>
+    <button type="button" data-go="massCalc">Mass</button>
+  </div>
+</section>
+
+<section class="panel" id="areaRef" data-title="Area" data-parent="formulas">
+  <div class="shapes">
+    <div class="shapehead"><span>Shape</span><span>Area</span></div>
+    <div class="shaperow">
+      <svg viewBox="0 0 84 64" role="img" aria-label="Square"><rect class="fillsoft" x="17" y="7" width="50" height="50"/></svg>
+      <div><div class="shapename">Square</div><div class="shapeeq">a = a&#178;</div></div>
+    </div>
+    <div class="shaperow">
+      <svg viewBox="0 0 84 64" role="img" aria-label="Rectangle"><rect class="fillsoft" x="7" y="14" width="70" height="36"/></svg>
+      <div><div class="shapename">Rectangle</div><div class="shapeeq">a = ab</div></div>
+    </div>
+    <div class="shaperow">
+      <svg viewBox="0 0 84 64" role="img" aria-label="Parallelogram"><polygon class="fillsoft" points="20,12 78,12 62,52 4,52"/></svg>
+      <div><div class="shapename">Parallelogram</div><div class="shapeeq">a = bh</div></div>
+    </div>
+    <div class="shaperow">
+      <svg viewBox="0 0 84 64" role="img" aria-label="Trapezoid"><polygon class="fillsoft" points="24,12 60,12 78,52 6,52"/></svg>
+      <div><div class="shapename">Trapezoid</div><div class="shapeeq">a = h/2 (b&#8321; + b&#8322;)</div></div>
+    </div>
+    <div class="shaperow">
+      <svg viewBox="0 0 84 64" role="img" aria-label="Circle"><circle class="fillsoft" cx="42" cy="32" r="25"/></svg>
+      <div><div class="shapename">Circle</div><div class="shapeeq">a = &#960;r&#178;</div></div>
+    </div>
+    <div class="shaperow">
+      <svg viewBox="0 0 84 64" role="img" aria-label="Triangle"><polygon class="fillsoft" points="42,8 76,56 8,56"/></svg>
+      <div><div class="shapename">Triangle</div><div class="shapeeq">a = 1/2 (bh)</div></div>
+    </div>
+    <div class="shaperow">
+      <svg viewBox="0 0 84 64" role="img" aria-label="Road intersection"><path class="fillsoft" d="M4 22 h24 v-18 h28 v18 h24 v20 h-24 v18 h-28 v-18 h-24 z"/></svg>
+      <div><div class="shapename">Intersection</div><div class="shapeeq">a = (L &#215; R) + 0.43 &#215; R&#178;</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="volumeRef" data-title="Volume" data-parent="formulas">
+  <div class="shapes">
+    <div class="shapehead"><span>Shape</span><span>Volume</span></div>
+    <div class="shaperow">
+      <svg viewBox="0 0 84 64" role="img" aria-label="Cube"><polygon class="fillsoft" points="10,20 46,20 46,56 10,56"/><polyline class="stroke" points="10,20 26,8 62,8 62,44 46,56"/><line class="stroke" x1="46" y1="20" x2="62" y2="8"/></svg>
+      <div><div class="shapename">Cube</div><div class="shapeeq">v = a&#179;</div></div>
+    </div>
+    <div class="shaperow">
+      <svg viewBox="0 0 84 64" role="img" aria-label="Rectangular prism"><polygon class="fillsoft" points="8,24 56,24 56,54 8,54"/><polyline class="stroke" points="8,24 24,10 72,10 72,40 56,54"/><line class="stroke" x1="56" y1="24" x2="72" y2="10"/></svg>
+      <div><div class="shapename">Rectangular Prism</div><div class="shapeeq">v = abc</div></div>
+    </div>
+    <div class="shaperow">
+      <svg viewBox="0 0 84 64" role="img" aria-label="Cylinder"><path class="fillsoft" d="M20 14 h44 v36 a22 8 0 0 1 -44 0 z"/><ellipse class="fillsoft" cx="42" cy="14" rx="22" ry="8"/></svg>
+      <div><div class="shapename">Cylinder</div><div class="shapeeq">v = bh&#8195;&#8195;v = &#960;r&#178;h</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="massCalc" data-title="Mass" data-parent="formulas" data-calc="density">
+  <div class="form">
+    <div class="field">
+      <label for="d_mass">Mass:</label>
+      <div class="inputrow"><input id="d_mass" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">Tonnes</span></div>
+    </div>
+    <div class="field">
+      <label for="d_vol">Volume:</label>
+      <div class="inputrow"><input id="d_vol" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">m<sup>3</sup></span></div>
+    </div>
+    <button class="go" type="button" data-run="density">Calculate</button>
+    <p class="msg" id="d_msg" role="alert" hidden></p>
+  </div>
+  <div class="results">
+    <h2>Density</h2><div class="rule"></div>
+    <div class="outrow"><span class="outval" id="d_out">&mdash;</span><span class="outlab">Tonnes/m<sup>3</sup></span></div>
+    <p class="note">Density = Mass &#247; Volume.</p>
+  </div>
+</section>
+
+<!-- ============ BINDER SPREAD RATES ============ -->
+<section class="panel" id="binderSpread" data-title="Binder Spread Rates" data-parent="home">
+  <div class="menu secondary">
+    <button type="button" data-go="binderRate">Binder Spread Rate</button>
+    <button type="button" data-go="areaToSpread">Area to Spread</button>
+    <button type="button" data-go="actualRate">Actual Spread Rate</button>
+  </div>
+</section>
+
+<section class="panel" id="binderRate" data-title="Binder Spread Rate" data-parent="binderSpread">
+  <div class="form">
+    <div class="field">
+      <label for="b_thick">Thickness:</label>
+      <div class="inputrow"><input id="b_thick" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">mm</span></div>
+    </div>
+    <div class="field">
+      <label for="b_pct">Percentage of Binder:</label>
+      <div class="inputrow"><input id="b_pct" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">%</span></div>
+    </div>
+    <div class="field">
+      <label for="b_mdd">Material MDD:</label>
+      <div class="inputrow"><input id="b_mdd" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">t/m<sup>3</sup></span></div>
+    </div>
+    <button class="go" type="button" data-run="binderRate">Calculate</button>
+    <p class="msg" id="b_msg" role="alert" hidden></p>
+  </div>
+  <div class="results">
+    <h2>Spread Rate</h2><div class="rule"></div>
+    <div class="outrow"><span class="outval" id="b_out">&mdash;</span><span class="outlab">kg/m<sup>2</sup></span></div>
+    <p class="note">Spread rate = Thickness &#215; % of Binder &#215; Material MDD &#247; 100.</p>
+  </div>
+</section>
+
+<section class="panel" id="areaToSpread" data-title="Area to Spread" data-parent="binderSpread">
+  <div class="form">
+    <div class="field">
+      <label for="a_rate">Spread Rate:</label>
+      <div class="inputrow"><input id="a_rate" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">kg/m<sup>2</sup></span></div>
+    </div>
+    <div class="field">
+      <label for="a_tonnes">Tonnes Available:</label>
+      <div class="inputrow"><input id="a_tonnes" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">Tonnes</span></div>
+    </div>
+    <button class="go" type="button" data-run="areaToSpread">Calculate</button>
+    <p class="msg" id="a_msg" role="alert" hidden></p>
+  </div>
+  <div class="results">
+    <h2>Resulting Area</h2><div class="rule"></div>
+    <div class="outrow"><span class="outval" id="a_out">&mdash;</span><span class="outlab">m<sup>2</sup></span></div>
+    <p class="note">Area = (Tonnes available &#215; 1,000) &#247; Spread rate.</p>
+  </div>
+</section>
+
+<section class="panel" id="actualRate" data-title="Actual Spread Rate" data-parent="binderSpread">
+  <div class="form">
+    <div class="field">
+      <label for="s_tonnes">Tonnes Used:</label>
+      <div class="inputrow"><input id="s_tonnes" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">Tonnes</span></div>
+    </div>
+    <div class="field">
+      <label for="s_area">Area Spread:</label>
+      <div class="inputrow"><input id="s_area" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">m<sup>2</sup></span></div>
+    </div>
+    <button class="go" type="button" data-run="actualRate">Calculate</button>
+    <p class="msg" id="s_msg" role="alert" hidden></p>
+  </div>
+  <div class="results">
+    <h2>Average Spread Rate</h2><div class="rule"></div>
+    <div class="outrow"><span class="outval" id="s_out">&mdash;</span><span class="outlab">kg/m<sup>2</sup></span></div>
+    <p class="note">Average spread rate = (Tonnes used &#215; 1,000) &#247; Area spread.</p>
+  </div>
+</section>
+
+<!-- ============ GRANULAR MATERIAL ============ -->
+<section class="panel" id="granualMaterial" data-title="Granular Material Calculations" data-parent="home">
+  <div class="menu secondary">
+    <button type="button" data-go="granTonnes">Determine Granular Material Tonnes</button>
+    <button type="button" data-go="granArea">Determine Material Placement Area</button>
+  </div>
+</section>
+
+<section class="panel" id="granTonnes" data-title="Determine Granular Material Tonnes" data-parent="granualMaterial">
+  <div class="form">
+    <div class="field">
+      <label for="g_area">Area:</label>
+      <div class="inputrow"><input id="g_area" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">m<sup>2</sup></span></div>
+    </div>
+    <div class="field">
+      <label for="g_thick">Compacted Thickness:</label>
+      <div class="inputrow"><input id="g_thick" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">mm</span></div>
+    </div>
+    <div class="field">
+      <label for="g_dens">Material Density:</label>
+      <div class="inputrow"><input id="g_dens" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">t/m<sup>3</sup></span></div>
+    </div>
+    <button class="go" type="button" data-run="granTonnes">Calculate</button>
+    <p class="msg" id="g_msg" role="alert" hidden></p>
+  </div>
+  <div class="results">
+    <h2>Tonnage Estimate</h2><div class="rule"></div>
+    <div class="outrow"><span class="outval" id="g_out">&mdash;</span><span class="outlab">Tonnes</span></div>
+    <p class="note">Tonnes = Density &#215; Area &#215; Compacted thickness &#247; 1,000.</p>
+  </div>
+</section>
+
+<section class="panel" id="granArea" data-title="Determine Material Placement Area" data-parent="granualMaterial">
+  <div class="form">
+    <div class="field">
+      <label for="m_ord">Material Ordered:</label>
+      <div class="inputrow"><input id="m_ord" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">Tonnes</span></div>
+    </div>
+    <div class="field">
+      <label for="m_thick">Compacted Thickness:</label>
+      <div class="inputrow"><input id="m_thick" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">mm</span></div>
+    </div>
+    <div class="field">
+      <label for="m_dens">Material Density:</label>
+      <div class="inputrow"><input id="m_dens" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">t/m<sup>3</sup></span></div>
+    </div>
+    <button class="go" type="button" data-run="granArea">Calculate</button>
+    <p class="msg" id="m_msg" role="alert" hidden></p>
+  </div>
+  <div class="results">
+    <h2>Placement Area</h2><div class="rule"></div>
+    <div class="outrow"><span class="outval" id="m_out">&mdash;</span><span class="outlab">m<sup>2</sup></span></div>
+    <p class="note">Area = Material ordered &#247; (Compacted thickness &#247; 1,000) &#247; Density.</p>
+  </div>
+</section>
+
+<!-- ============ ASPHALT ============ -->
+<section class="panel" id="asphaltContainer" data-title="Asphalt Calculations" data-parent="home">
+  <div class="menu secondary">
+    <button type="button" data-go="acTonnes">Determine AC Tonnes</button>
+    <button type="button" data-go="acArea">Determine Area to Pave</button>
+  </div>
+</section>
+
+<section class="panel" id="acTonnes" data-title="Determine AC Tonnes" data-parent="asphaltContainer">
+  <div class="form">
+    <div class="field">
+      <label for="c_area">Area:</label>
+      <div class="inputrow"><input id="c_area" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">m<sup>2</sup></span></div>
+    </div>
+    <div class="field">
+      <label for="c_thick">Compacted Thickness:</label>
+      <div class="inputrow"><input id="c_thick" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">mm</span></div>
+    </div>
+    <div class="field">
+      <label for="c_dens">Asphalt Density:</label>
+      <div class="inputrow"><input id="c_dens" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">t/m<sup>3</sup></span></div>
+    </div>
+    <button class="go" type="button" data-run="acTonnes">Calculate</button>
+    <p class="msg" id="c_msg" role="alert" hidden></p>
+  </div>
+  <div class="results">
+    <h2>Asphalt Estimate</h2><div class="rule"></div>
+    <div class="outrow"><span class="outval" id="c_out">&mdash;</span><span class="outlab">Tonnes</span></div>
+    <p class="note">Tonnes = Asphalt density &#215; Area &#215; Compacted thickness &#247; 1,000.</p>
+  </div>
+</section>
+
+<section class="panel" id="acArea" data-title="Determine Area to Pave" data-parent="asphaltContainer">
+  <div class="form">
+    <div class="field">
+      <label for="p_ord">Asphalt Available:</label>
+      <div class="inputrow"><input id="p_ord" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">Tonnes</span></div>
+    </div>
+    <div class="field">
+      <label for="p_thick">Compacted Thickness:</label>
+      <div class="inputrow"><input id="p_thick" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">mm</span></div>
+    </div>
+    <div class="field">
+      <label for="p_dens">Asphalt Density:</label>
+      <div class="inputrow"><input id="p_dens" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">t/m<sup>3</sup></span></div>
+    </div>
+    <button class="go" type="button" data-run="acArea">Calculate</button>
+    <p class="msg" id="p_msg" role="alert" hidden></p>
+  </div>
+  <div class="results">
+    <h2>Paving Area</h2><div class="rule"></div>
+    <div class="outrow"><span class="outval" id="p_out">&mdash;</span><span class="outlab">m<sup>2</sup></span></div>
+    <p class="note">Area = Asphalt available &#247; (Compacted thickness &#247; 1,000) &#247; Asphalt density.</p>
+  </div>
+</section>
+
+<!-- ============ BITUMEN CONVERSIONS ============ -->
+<section class="panel" id="bitumenConversion" data-title="Bitumen Conversions" data-parent="home">
+  <div class="section-intro">Conversion Options</div>
+  <div class="menu secondary">
+    <button type="button" data-go="litterToTonn">Litres to Tonnes</button>
+    <button type="button" data-go="tonnToLitter">Tonnes to Litres</button>
+    <button type="button" data-go="volumeConvert">Bitumen Volume Conversion Table</button>
+  </div>
+</section>
+
+<section class="panel" id="litterToTonn" data-title="Litres to Tonnes" data-parent="bitumenConversion">
+  <div class="form">
+    <div class="field">
+      <label for="l_temp">Insert Bitumen Temperature: (Degrees)</label>
+      <div class="inputrow"><input id="l_temp" type="number" inputmode="decimal" step="any" placeholder="38 &ndash; 200"><span class="unit">&#176;C</span></div>
+    </div>
+    <div class="field">
+      <label for="l_vol">Insert Bitumen Volume: (Litres)</label>
+      <div class="inputrow"><input id="l_vol" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">Litres</span></div>
+    </div>
+    <button class="go" type="button" data-run="litresToTonnes">Convert</button>
+    <p class="msg" id="l_msg" role="alert" hidden></p>
+  </div>
+  <div class="results">
+    <h2>Equivalent Mass</h2><div class="rule"></div>
+    <div class="outrow"><span class="outval" id="l_tonnes">&mdash;</span><span class="outlab">Tonnes</span></div>
+    <div class="outrow"><span class="outval" id="l_kg">&mdash;</span><span class="outlab">kg</span></div>
+    <p class="note">Mass (t) = 0.00103 &#215; Volume (L) &#215; conversion factor A for the measured temperature. Temperature must be between 38&#176;C and 200&#176;C.</p>
+  </div>
+</section>
+
+<section class="panel" id="tonnToLitter" data-title="Tonnes to Litres" data-parent="bitumenConversion">
+  <div class="form">
+    <div class="field">
+      <label for="t_temp">Insert Bitumen Temperature: (Degrees)</label>
+      <div class="inputrow"><input id="t_temp" type="number" inputmode="decimal" step="any" placeholder="38 &ndash; 200"><span class="unit">&#176;C</span></div>
+    </div>
+    <div class="field">
+      <label for="t_mass">Insert Bitumen Mass: (Tonnes)</label>
+      <div class="inputrow"><input id="t_mass" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">Tonnes</span></div>
+    </div>
+    <button class="go" type="button" data-run="tonnesToLitres">Convert</button>
+    <p class="msg" id="t_msg" role="alert" hidden></p>
+  </div>
+  <div class="results">
+    <h2>Equivalent Volume</h2><div class="rule"></div>
+    <div class="outrow"><span class="outval" id="t_cold">&mdash;</span><span class="outlab">Cold Litres (@15&#176;C)</span></div>
+    <div class="outrow"><span class="outval" id="t_hot">&mdash;</span><span class="outlab">Hot Litres</span></div>
+    <p class="note">Cold litres = Mass (t) &#215; 971. Hot litres = Cold litres &#247; conversion factor A for the measured temperature.</p>
+  </div>
+</section>
+
+<section class="panel" id="volumeConvert" data-title="Volume Conversion" data-parent="bitumenConversion">
+  <div class="tablewrap">
+    <div class="scroll">
+      <table>
+        <caption>Bitumen volume conversion factors, 38&#176;C to 200&#176;C.</caption>
+        <thead><tr><th scope="col">Temp. (T&#176;C)</th><th scope="col">A</th></tr></thead>
+        <tbody id="vcfBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DCP TO CBR ============ -->
+<section class="panel" id="dcptocbr" data-title="DCP to CBR" data-parent="home">
+  <div class="form">
+    <div class="field">
+      <label for="k_blows">Blows Per 100mm</label>
+      <div class="inputrow"><input id="k_blows" type="number" inputmode="decimal" step="any" placeholder="0"><span class="unit">blows</span></div>
+    </div>
+    <button class="go" type="button" data-run="dcp">Convert</button>
+    <p class="msg" id="k_msg" role="alert" hidden></p>
+  </div>
+  <div class="results">
+    <h2>Equivalent CBR</h2><div class="rule"></div>
+    <div class="outrow"><span class="outval" id="k_out">&mdash;</span><span class="outlab">% CBR</span></div>
+    <p class="note">CBR = 294.02 &#215; (100 &#247; blows per 100&nbsp;mm)<sup>&minus;1.116</sup>.</p>
+  </div>
+</section>
+
+<footer>SPA Engineering Calculator &middot; web edition</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var VCF = {38:0.9856,39:0.985,40:0.9844,41:0.9838,42:0.9831,43:0.9825,44:0.9819,45:0.9813,46:0.9806,47:0.98,48:0.9794,49:0.9788,50:0.9782,51:0.9776,52:0.9769,53:0.9763,54:0.9757,55:0.9751,56:0.9745,57:0.9739,58:0.9732,59:0.9726,60:0.972,61:0.9714,62:0.9708,63:0.9702,64:0.9695,65:0.9689,66:0.9683,67:0.9677,68:0.9671,69:0.9665,70:0.9659,71:0.9653,72:0.9646,73:0.964,74:0.9634,75:0.9628,76:0.9622,77:0.9616,78:0.961,79:0.9604,80:0.9597,81:0.9591,82:0.9585,83:0.9579,84:0.9573,85:0.9567,86:0.9561,87:0.9555,88:0.9549,89:0.9543,90:0.9537,91:0.9531,92:0.9524,93:0.9518,94:0.9512,95:0.9506,96:0.95,97:0.9494,98:0.9488,99:0.9482,100:0.9476,101:0.947,102:0.9464,103:0.9458,104:0.9452,105:0.9446,106:0.944,107:0.9434,108:0.9428,109:0.9422,110:0.9416,111:0.941,112:0.9404,113:0.9398,114:0.9392,115:0.9386,116:0.938,117:0.9374,118:0.9368,119:0.9362,120:0.9356,121:0.935,122:0.9344,123:0.9338,124:0.9332,125:0.9326,126:0.932,127:0.9314,128:0.9308,129:0.9302,130:0.9296,131:0.929,132:0.9284,133:0.9278,134:0.9272,135:0.9266,136:0.926,137:0.9255,138:0.9249,139:0.9243,140:0.9237,141:0.9231,142:0.9225,143:0.9219,144:0.9213,145:0.9207,146:0.9201,147:0.9195,148:0.9189,149:0.9184,150:0.9178,151:0.9172,152:0.9166,153:0.916,154:0.9154,155:0.9148,156:0.9142,157:0.9136,158:0.913,159:0.9125,160:0.9119,161:0.9113,162:0.9107,163:0.9101,164:0.9095,165:0.909,166:0.9084,167:0.9078,168:0.9072,169:0.9066,170:0.906,171:0.9055,172:0.9049,173:0.9043,174:0.9037,175:0.9031,176:0.9025,177:0.902,178:0.9014,179:0.9008,180:0.9002,181:0.8996,182:0.899,183:0.8985,184:0.8979,185:0.8973,186:0.8967,187:0.8962,188:0.8956,189:0.895,190:0.8944,191:0.8939,192:0.8933,193:0.8927,194:0.8921,195:0.8915,196:0.8909,197:0.8904,198:0.8898,199:0.8892,200:0.8886};
+
+  /* ---------- navigation ---------- */
+  var panels = {};
+  var list = document.querySelectorAll(".panel");
+  for (var i = 0; i < list.length; i++) { panels[list[i].id] = list[i]; }
+
+  var backBtn = document.getElementById("backBtn");
+  var barTitle = document.getElementById("barTitle");
+  var current = "home";
+
+  function show(id) {
+    if (!panels[id]) { id = "home"; }
+    panels[current].classList.remove("active");
+    panels[id].classList.add("active");
+    current = id;
+    barTitle.textContent = panels[id].getAttribute("data-title");
+    backBtn.hidden = !panels[id].getAttribute("data-parent");
+    if (window.location.hash !== "#" + id) {
+      window.location.hash = id;
+    }
+    window.scrollTo(0, 0);
+  }
+
+  document.addEventListener("click", function (ev) {
+    var t = ev.target.closest ? ev.target.closest("[data-go]") : null;
+    if (t) { show(t.getAttribute("data-go")); }
+  });
+
+  backBtn.addEventListener("click", function () {
+    show(panels[current].getAttribute("data-parent") || "home");
+  });
+
+  window.addEventListener("hashchange", function () {
+    var id = window.location.hash.replace("#", "");
+    if (panels[id] && id !== current) { show(id); }
+  });
+
+  /* ---------- helpers ---------- */
+  function num(id) {
+    var el = document.getElementById(id);
+    var raw = el.value.replace(/,/g, "").trim();
+    if (raw === "") { return null; }
+    var v = parseFloat(raw);
+    return isFinite(v) ? v : NaN;
+  }
+
+  function commas(s) {
+    var parts = String(s).split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join(".");
+  }
+
+  function say(msgId, text) {
+    var el = document.getElementById(msgId);
+    if (text) { el.textContent = text; el.hidden = false; }
+    else { el.textContent = ""; el.hidden = true; }
+  }
+
+  function put(id, text) { document.getElementById(id).textContent = text; }
+
+  function clearOut(ids) {
+    for (var i = 0; i < ids.length; i++) { put(ids[i], "\u2014"); }
+  }
+
+  /* Validates a list of [value, friendlyName]; returns error text or null. */
+  function check(fields) {
+    for (var i = 0; i < fields.length; i++) {
+      var v = fields[i][0];
+      if (v === null) { return "Please enter " + fields[i][1] + "."; }
+      if (isNaN(v)) { return "Please enter a valid number for " + fields[i][1] + "."; }
+    }
+    return null;
+  }
+
+  function factorFor(temp) {
+    var t = Math.trunc(temp);
+    return Object.prototype.hasOwnProperty.call(VCF, t) ? VCF[t] : null;
+  }
+
+  /* ---------- calculators ---------- */
+  var runners = {
+
+    litresToTonnes: function () {
+      var temp = num("l_temp"), vol = num("l_vol");
+      var err = check([[temp, "the bitumen temperature"], [vol, "the bitumen volume"]]);
+      if (!err) {
+        var f = factorFor(temp);
+        if (f === null) { err = "Bitumen temperature value must be between 38 and 200."; }
+      }
+      if (err) { say("l_msg", err); clearOut(["l_tonnes", "l_kg"]); return; }
+      say("l_msg", "");
+      var tonnes = 0.00103 * vol * factorFor(temp);
+      put("l_tonnes", commas(tonnes.toFixed(2)));
+      put("l_kg", commas((tonnes * 1000).toFixed(0)));
+    },
+
+    tonnesToLitres: function () {
+      var temp = num("t_temp"), mass = num("t_mass");
+      var err = check([[temp, "the bitumen temperature"], [mass, "the bitumen mass"]]);
+      if (!err) {
+        var f = factorFor(temp);
+        if (f === null) { err = "Bitumen temperature value must be between 38 and 200."; }
+      }
+      if (err) { say("t_msg", err); clearOut(["t_cold", "t_hot"]); return; }
+      say("t_msg", "");
+      var cold = 971 * mass;
+      var hot = cold / factorFor(temp);
+      put("t_cold", commas(cold.toFixed(0)));
+      put("t_hot", commas(hot.toFixed(0)));
+    },
+
+    binderRate: function () {
+      var th = num("b_thick"), pct = num("b_pct"), mdd = num("b_mdd");
+      var err = check([[th, "the thickness"], [pct, "the % of binder"], [mdd, "the material MDD"]]);
+      if (err) { say("b_msg", err); clearOut(["b_out"]); return; }
+      say("b_msg", "");
+      put("b_out", commas((th * pct * mdd / 100).toFixed(2)));
+    },
+
+    areaToSpread: function () {
+      var rate = num("a_rate"), tonnes = num("a_tonnes");
+      var err = check([[rate, "the spread rate"], [tonnes, "the available tonnes"]]);
+      if (!err && rate === 0) { err = "Spread rate must be greater than zero."; }
+      if (err) { say("a_msg", err); clearOut(["a_out"]); return; }
+      say("a_msg", "");
+      put("a_out", commas(Math.round(tonnes * 1000 / rate)));
+    },
+
+    actualRate: function () {
+      var tonnes = num("s_tonnes"), area = num("s_area");
+      var err = check([[tonnes, "the tonnes used"], [area, "the area spread"]]);
+      if (!err && area === 0) { err = "Area spread must be greater than zero."; }
+      if (err) { say("s_msg", err); clearOut(["s_out"]); return; }
+      say("s_msg", "");
+      put("s_out", commas((tonnes * 1000 / area).toFixed(2)));
+    },
+
+    granTonnes: function () {
+      var area = num("g_area"), th = num("g_thick"), dens = num("g_dens");
+      var err = check([[area, "the area"], [th, "the compacted thickness"], [dens, "the material density"]]);
+      if (err) { say("g_msg", err); clearOut(["g_out"]); return; }
+      say("g_msg", "");
+      put("g_out", commas(Math.round(dens * area * th / 1000)));
+    },
+
+    granArea: function () {
+      var ord = num("m_ord"), th = num("m_thick"), dens = num("m_dens");
+      var err = check([[ord, "the material ordered"], [th, "the compacted thickness"], [dens, "the material density"]]);
+      if (!err && (th === 0 || dens === 0)) { err = "Thickness and density must be greater than zero."; }
+      if (err) { say("m_msg", err); clearOut(["m_out"]); return; }
+      say("m_msg", "");
+      put("m_out", commas(Math.round(ord / (th / 1000) / dens)));
+    },
+
+    acTonnes: function () {
+      var area = num("c_area"), th = num("c_thick"), dens = num("c_dens");
+      var err = check([[area, "the area"], [th, "the compacted thickness"], [dens, "the asphalt density"]]);
+      if (err) { say("c_msg", err); clearOut(["c_out"]); return; }
+      say("c_msg", "");
+      put("c_out", commas(Math.round(dens * area * th / 1000)));
+    },
+
+    acArea: function () {
+      var ord = num("p_ord"), th = num("p_thick"), dens = num("p_dens");
+      var err = check([[ord, "the asphalt available"], [th, "the compacted thickness"], [dens, "the asphalt density"]]);
+      if (!err && (th === 0 || dens === 0)) { err = "Thickness and density must be greater than zero."; }
+      if (err) { say("p_msg", err); clearOut(["p_out"]); return; }
+      say("p_msg", "");
+      put("p_out", commas(Math.round(ord / (th / 1000) / dens)));
+    },
+
+    dcp: function () {
+      var blows = num("k_blows");
+      var err = check([[blows, "the blows per 100 mm"]]);
+      if (!err && blows <= 0) { err = "Blows per 100 mm must be greater than zero."; }
+      if (err) { say("k_msg", err); clearOut(["k_out"]); return; }
+      say("k_msg", "");
+      put("k_out", (294.02 * Math.pow(100 / blows, -1.116)).toFixed(1));
+    },
+
+    density: function () {
+      var mass = num("d_mass"), vol = num("d_vol");
+      var err = check([[mass, "the mass"], [vol, "the volume"]]);
+      if (!err && vol === 0) { err = "Volume must be greater than zero."; }
+      if (err) { say("d_msg", err); clearOut(["d_out"]); return; }
+      say("d_msg", "");
+      put("d_out", (mass / vol).toFixed(2));
+    }
+  };
+
+  document.addEventListener("click", function (ev) {
+    var t = ev.target.closest ? ev.target.closest("[data-run]") : null;
+    if (t && runners[t.getAttribute("data-run")]) {
+      runners[t.getAttribute("data-run")]();
+    }
+  });
+
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key !== "Enter") { return; }
+    var panel = panels[current];
+    if (!panel || !panel.contains(ev.target) || ev.target.tagName !== "INPUT") { return; }
+    var btn = panel.querySelector("[data-run]");
+    if (btn) { ev.preventDefault(); btn.click(); }
+  });
+
+  /* ---------- build the conversion-factor table ---------- */
+  (function () {
+    var body = document.getElementById("vcfBody");
+    var frag = document.createDocumentFragment();
+    var keys = Object.keys(VCF).map(Number).sort(function (a, b) { return a - b; });
+    for (var i = 0; i < keys.length; i++) {
+      var tr = document.createElement("tr");
+      var a = document.createElement("td");
+      a.textContent = keys[i];
+      var b = document.createElement("td");
+      b.textContent = VCF[keys[i]].toFixed(4);
+      tr.appendChild(a); tr.appendChild(b);
+      frag.appendChild(tr);
+    }
+    body.appendChild(frag);
+  }());
+
+  /* ---------- open on the requested screen ---------- */
+  var start = window.location.hash.replace("#", "");
+  show(panels[start] ? start : "home");
+}());
+</script>
+<div id="updateBar" hidden><span style="flex:1">A new version is available.</span><button type="button" id="updateBtn">Update</button></div>
+<script>
+/* ---------- PWA: install, offline status, update prompt, data persistence ---------- */
+(function () {
+  "use strict";
+
+  /* --- 1. Service worker registration + update flow --- */
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").then(function (reg) {
+        function watch(worker) {
+          if (!worker) { return; }
+          worker.addEventListener("statechange", function () {
+            if (worker.state === "installed" && navigator.serviceWorker.controller) {
+              showUpdate(worker);
+            }
+          });
+        }
+        if (reg.waiting && navigator.serviceWorker.controller) { showUpdate(reg.waiting); }
+        reg.addEventListener("updatefound", function () { watch(reg.installing); });
+      }).catch(function () { /* offline or unsupported context - app still works */ });
+
+      /* Make sure the exact URL this app was opened at is saved for offline
+         refreshes, whatever form it takes (/, /index.html, ?query). */
+      function cacheThisPage() {
+        navigator.serviceWorker.ready.then(function (r) {
+          var target = r.active || navigator.serviceWorker.controller;
+          if (target) { target.postMessage({ type: "CACHE_PAGE", url: window.location.href }); }
+        }).catch(function () {});
+      }
+      cacheThisPage();
+      window.addEventListener("online", cacheThisPage);
+
+      var reloading = false;
+      navigator.serviceWorker.addEventListener("controllerchange", function () {
+        if (reloading) { return; }
+        reloading = true;
+        window.location.reload();
+      });
+    });
+  }
+
+  function showUpdate(worker) {
+    var bar = document.getElementById("updateBar");
+    var btn = document.getElementById("updateBtn");
+    if (!bar || !btn) { return; }
+    bar.hidden = false;
+    btn.onclick = function () {
+      bar.hidden = true;
+      worker.postMessage({ type: "SKIP_WAITING" });
+    };
+  }
+
+  /* --- 2. Install prompt --- */
+  var deferred = null;
+  var installBtn = document.getElementById("installBtn");
+  window.addEventListener("beforeinstallprompt", function (ev) {
+    ev.preventDefault();
+    deferred = ev;
+    if (installBtn) { installBtn.hidden = false; }
+  });
+  if (installBtn) {
+    installBtn.addEventListener("click", function () {
+      if (!deferred) { return; }
+      deferred.prompt();
+      deferred.userChoice.then(function () {
+        deferred = null;
+        installBtn.hidden = true;
+      });
+    });
+  }
+  window.addEventListener("appinstalled", function () {
+    deferred = null;
+    if (installBtn) { installBtn.hidden = true; }
+  });
+
+  /* --- 3. Offline indicator --- */
+  var offlineBar = document.getElementById("offlineBar");
+  function netStatus() {
+    if (offlineBar) { offlineBar.hidden = navigator.onLine; }
+  }
+  window.addEventListener("online", netStatus);
+  window.addEventListener("offline", netStatus);
+  netStatus();
+
+}());
+</script>
+
+</body>
+</html>
