@@ -222,20 +222,6 @@ footer{
   appearance:none;border:0;cursor:pointer;background:#fff;color:var(--brand-dark);
   font-family:inherit;font-size:14px;font-weight:700;border-radius:8px;padding:7px 12px;
 }
-#iosHelp{
-  position:fixed;left:12px;right:12px;bottom:12px;z-index:70;max-width:736px;margin:0 auto;
-  background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:14px;
-  padding:16px 18px;box-shadow:0 6px 24px rgba(0,0,0,.35);font-size:15px;
-}
-#iosHelp[hidden]{display:none}
-#iosHelp h2{margin:0 0 8px;font-size:16px;color:var(--brand-dark)}
-@media (prefers-color-scheme: dark){ #iosHelp h2{color:var(--brand-grad)} }
-#iosHelp ol{margin:0 0 12px;padding-left:22px}
-#iosHelp li{margin:4px 0}
-#iosHelp button{
-  appearance:none;border:0;cursor:pointer;background:var(--brand-dark);color:#fff;
-  font-family:inherit;font-size:14px;font-weight:700;border-radius:8px;padding:8px 16px;
-}
 </style>
 <meta name="theme-color" content="#2ea3f2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#16448c" media="(prefers-color-scheme: dark)">
@@ -858,15 +844,6 @@ footer{
   show(panels[start] ? start : "home");
 }());
 </script>
-<div id="iosHelp" hidden role="dialog" aria-label="Install on iPad or iPhone">
-  <h2>Install SPA Calculator</h2>
-  <ol>
-    <li>Tap the <strong>Share</strong> button (square with an up arrow) in Safari&#8217;s toolbar.</li>
-    <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
-    <li>Tap <strong>Add</strong>. Open it from your Home Screen &#8212; it works offline.</li>
-  </ol>
-  <button type="button" id="iosHelpClose">Got it</button>
-</div>
 <div id="updateBar" hidden><span style="flex:1">A new version is available.</span><button type="button" id="updateBtn">Update</button></div>
 <script>
 /* ---------- PWA: install, offline status, update prompt, data persistence ---------- */
@@ -920,38 +897,34 @@ footer{
     };
   }
 
-  /* --- 2. Install prompt --- */
+  /* --- 2. One-tap install --- */
   var deferred = null;
   var installBtn = document.getElementById("installBtn");
-  window.addEventListener("beforeinstallprompt", function (ev) {
-    ev.preventDefault();
-    deferred = ev;
-    if (installBtn) { installBtn.hidden = false; }
-  });
-  if (installBtn) {
-    installBtn.addEventListener("click", function () {
-      if (!deferred) { return; }
-      deferred.prompt();
-      deferred.userChoice.then(function () {
-        deferred = null;
-        installBtn.hidden = true;
-      });
-    });
-  }
-  /* iPad / iPhone Safari never fires beforeinstallprompt, so offer manual steps instead */
   var ua = navigator.userAgent || "";
   var isIOS = /iPad|iPhone|iPod/.test(ua) ||
               (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   var isStandalone = window.navigator.standalone === true ||
               (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
-  var iosHelp = document.getElementById("iosHelp");
-  if (isIOS && !isStandalone && installBtn) {
-    installBtn.hidden = false;
+
+  /* Edge / Chrome / Android: the browser hands over a real install prompt */
+  window.addEventListener("beforeinstallprompt", function (ev) {
+    ev.preventDefault();
+    deferred = ev;
+    if (installBtn && !isStandalone) { installBtn.hidden = false; }
+  });
+
+  /* iPad / iPhone: Apple offers no install API, so open the share sheet (Add to Home Screen is in it) */
+  if (isIOS && !isStandalone && installBtn && navigator.share) { installBtn.hidden = false; }
+
+  if (installBtn) {
     installBtn.addEventListener("click", function () {
-      if (!deferred && iosHelp) { iosHelp.hidden = false; }
+      if (deferred) {
+        deferred.prompt();
+        deferred.userChoice.then(function () { deferred = null; });
+      } else if (isIOS && navigator.share) {
+        navigator.share({ title: document.title, url: window.location.href.split("#")[0] }).catch(function () {});
+      }
     });
-    var closeBtn = document.getElementById("iosHelpClose");
-    if (closeBtn) { closeBtn.addEventListener("click", function () { iosHelp.hidden = true; }); }
   }
 
   window.addEventListener("appinstalled", function () {
