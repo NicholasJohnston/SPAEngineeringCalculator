@@ -2,7 +2,7 @@
    Strategy: precache the app shell on install, then serve cache-first so the
    app is fully usable with no network at all, including a manual refresh. */
 
-var CACHE = "spa-calc-v7";
+var CACHE = "spa-calc-v8";
 var SHELL = "./index.html";
 
 var ASSETS = [
